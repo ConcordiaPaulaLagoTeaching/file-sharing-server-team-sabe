@@ -11,11 +11,10 @@ public class FileServer {
 
     private FileSystemManager fsManager;
     private int port;
-    public FileServer(int port, String fileSystemName, int totalSize){
+    public FileServer(int port, String fileSystemName, int totalSize) throws Exception {
         // Initialize the FileSystemManager
-        FileSystemManager fsManager = new FileSystemManager(fileSystemName,
+        this.fsManager = FileSystemManager.getInstance(fileSystemName,
                 10*128 );
-        this.fsManager = fsManager;
         this.port = port;
     }
 
