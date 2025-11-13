@@ -36,12 +36,30 @@ public class FileServer {
                         String command = parts[0].toUpperCase();
 
                         switch (command) {
+                            //implmentation of needed commands
                             case "CREATE":
                                 fsManager.createFile(parts[1]);
                                 writer.println("SUCCESS: File '" + parts[1] + "' created.");
                                 writer.flush();
                                 break;
-                            //TODO: Implement other commands READ, WRITE, DELETE, LIST
+                            case "DELETE":
+                                fsManager.deleteFile(parts[1]);
+                                writer.println("SUCCESS: File '" + parts[1] + "' deleted.");
+                                break;
+                            case "LIST":
+                                String files = fsManager.listFiles(); 
+                                if (files.length()==0){
+                                    writer.println("No files.");
+                                }
+                                else {
+                                    writer.println("Files:\n" + files);
+                                }
+                                break;
+                            // case "READ":
+                            // byte[] contents = fsManager.readFile(parts[1]);
+                            // writer.println("CONTENT: " + new String(contents));
+                            // break;
+
                             case "QUIT":
                                 writer.println("SUCCESS: Disconnecting.");
                                 return;
