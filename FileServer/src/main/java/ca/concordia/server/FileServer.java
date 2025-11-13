@@ -12,17 +12,17 @@ import java.util.concurrent.Executors;
 
 /**
  * Multithreaded file server that handles client connections and file operations.
- *
+ * <p>
  * Architecture:
  * - Main thread listens for incoming connections on a ServerSocket
  * - Each client connection is handled in its own thread via ExecutorService
  * - All threads share the same FileSystemManager (which handles synchronization)
- *
+ * <p>
  * The server uses a cached thread pool, which:
  * - Creates new threads on demand when all existing threads are busy
  * - Reuses idle threads from previous connections
  * - Can scale to thousands of concurrent clients
- *
+ * <p>
  * Protocol: Simple text-based commands (CREATE, WRITE, READ, DELETE, LIST, QUIT)
  */
 public class FileServer {
@@ -34,12 +34,12 @@ public class FileServer {
     /**
      * Creates a new file server.
      *
-     * @param port Network port to listen on (e.g., 12345)
+     * @param port           Network port to listen on (e.g., 12345)
      * @param fileSystemName Name of file to persist filesystem to disk
-     * @param totalSize Total storage capacity (informational)
-     * @param blockSize Size of each storage block in bytes
-     * @param maxFiles Maximum number of files that can be stored
-     * @param maxBlocks Maximum number of storage blocks
+     * @param totalSize      Total storage capacity (informational)
+     * @param blockSize      Size of each storage block in bytes
+     * @param maxFiles       Maximum number of files that can be stored
+     * @param maxBlocks      Maximum number of storage blocks
      */
     public FileServer(int port, String fileSystemName, int totalSize, int blockSize, int maxFiles, int maxBlocks) {
         // Set up the filesystem manager - this handles all the actual file operations
@@ -82,13 +82,13 @@ public class FileServer {
 
     /**
      * Handles a single client connection in its own thread.
-     *
+     * <p>
      * Each client gets one of these. The handler:
      * 1. Reads commands from the client
      * 2. Parses and executes them
      * 3. Sends back responses
      * 4. Repeats until client disconnects
-     *
+     * <p>
      * Multiple ClientHandlers can run simultaneously, all sharing the same
      * FileSystemManager (which is thread-safe).
      */
@@ -105,8 +105,8 @@ public class FileServer {
         public void run() {
             // Set up I/O streams for talking to the client
             try (
-                BufferedReader reader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
-                PrintWriter writer = new PrintWriter(clientSocket.getOutputStream(), true)
+                    BufferedReader reader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+                    PrintWriter writer = new PrintWriter(clientSocket.getOutputStream(), true)
             ) {
                 String line;
                 // Keep reading commands until client disconnects
@@ -139,7 +139,7 @@ public class FileServer {
 
         /**
          * Parses a command line and routes it to the appropriate handler.
-         *
+         * <p>
          * Commands are simple text-based: "COMMAND arg1 arg2 ..."
          * We split on whitespace, with a max of 3 parts so content with spaces works.
          *

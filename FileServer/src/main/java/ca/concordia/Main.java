@@ -4,7 +4,7 @@ import ca.concordia.server.FileServer;
 
 /**
  * Entry point for the File Sharing Server application.
- *
+ * <p>
  * This sets up the server configuration and starts it listening for client connections.
  * The server will run until manually stopped (Ctrl+C).
  */

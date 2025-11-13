@@ -2,15 +2,15 @@ package ca.concordia.filesystem.datastructures;
 
 /**
  * Represents a node in the file block chain.
- *
+ * <p>
  * Each FNode acts like a node in a linked list, pointing to an actual data block
  * and the next node in the chain. This allows files to span multiple non-contiguous
  * blocks, similar to how real filesystems work.
- *
+ * <p>
  * For example, if a file needs 3 blocks:
- *   FNode[0] -> blockIndex=5, nextBlock=1
- *   FNode[1] -> blockIndex=12, nextBlock=2
- *   FNode[2] -> blockIndex=8, nextBlock=-1 (end of chain)
+ * FNode[0] -> blockIndex=5, nextBlock=1
+ * FNode[1] -> blockIndex=12, nextBlock=2
+ * FNode[2] -> blockIndex=8, nextBlock=-1 (end of chain)
  */
 public class FNode {
 

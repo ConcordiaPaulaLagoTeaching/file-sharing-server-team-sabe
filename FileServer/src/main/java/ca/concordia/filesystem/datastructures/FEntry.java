@@ -2,10 +2,10 @@ package ca.concordia.filesystem.datastructures;
 
 /**
  * Represents metadata for a single file in the filesystem.
- *
+ * <p>
  * Think of this as the "index card" in a file cabinet - it tells you the file's name,
  * how big it is, and where to find the actual data (via firstBlock pointer).
- *
+ * <p>
  * The filename limit of 11 characters is intentional to keep the structure compact,
  * similar to old DOS 8.3 filenames.
  */
