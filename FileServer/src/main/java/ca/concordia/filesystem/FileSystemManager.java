@@ -3,6 +3,8 @@ package ca.concordia.filesystem;
 import ca.concordia.filesystem.datastructures.FEntry;
 
 import java.io.RandomAccessFile; //allows low level access to a binary file that represents the disk
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.locks.ReentrantLock; 
 
 public class FileSystemManager {
@@ -81,7 +83,7 @@ public class FileSystemManager {
         try{
             int inodeIndex = findFileByName(fileName); //store the index of the file to be deleted
             if (inodeIndex==-1){ //if file was not found
-                throw new Exception("The file"+ fileName +"was not found");
+                throw new Exception("ERROR: file "+ fileName +" does not exist.");
             }
 
             FEntry file = inodeTable[inodeIndex]; //get the file entry from the inode table
@@ -110,7 +112,7 @@ public class FileSystemManager {
         try{
             int inodeIndex = findFileByName(fileName);
             if (inodeIndex == -1){
-                throw new Exception ("The file"+fileName+"was not found.");
+                throw new Exception ("ERROR: file "+fileName+" does not exist.");
             }
 
             FEntry file = inodeTable[inodeIndex]; 
@@ -140,12 +142,101 @@ public class FileSystemManager {
             globalLock.unlock();
         }
     }
-    public void writeFile(String fileName, int offset, byte[] data) throws Exception {
-        // TODO
-        throw new UnsupportedOperationException("Method not implemented yet.");
+    public void writeFile(String fileName, byte[] data) throws Exception {
+        globalLock.lock();
+        try{
+            int inodeIndex = findFileByName(fileName);
+            if (inodeIndex == -1){
+                throw new Exception("ERROR: file "+fileName+" does not exist.");
+            }
+
+            //calculate number of blocks needed
+            int blockData = BLOCK_SIZE -2; //each block reserves 2 bytes for the next block index so we subtract 2
+            int blocksNeeded = (data.length + blockData -1)/blockData; //ceiling division 
+            if (data.length==0){ //if file is empty, no blocks are needed
+                blocksNeeded = 0; 
+            }
+
+            //check the number of available blocks
+            int availableBlocks = 0;
+            for(boolean free : freeBlockList){
+                if(free)availableBlocks ++; //count free blocks
+            }
+
+            //check if the available blocks are enough
+            if(blocksNeeded > availableBlocks){
+                throw new Exception("ERROR: file too large.");
+            }
+
+            FEntry file = inodeTable[inodeIndex]; //get the file entry from the inode table
+
+            //Free previously allocated blocks
+            short currentBlock = file.getFirstBlock(); 
+            while(currentBlock !=-1){ //while there are still blocks
+            disk.seek(currentBlock * BLOCK_SIZE);
+            short nextBlock = disk.readShort(); //get the next block index
+
+            disk.seek(currentBlock * BLOCK_SIZE);
+            byte[] zeroBlock = new byte[BLOCK_SIZE];
+            disk.write(zeroBlock); //overwrite the block with zeros
+
+            freeBlockList[currentBlock]=true;
+            currentBlock = nextBlock;
+            }
+            
+        //Allocate new blocks and write data
+        short firstBlock = -1; 
+        short previousBlock = -1;
+        int offset = 0; //needed to keep track of how much data has been written
+
+        for (int i=0; i<blocksNeeded; i++){ //for each block needed
+        short blockNumber = -1;
+        for (short j=0; j<MAXBLOCKS;j++){ //find a free block
+            if (freeBlockList[j]){
+                blockNumber = j; //allocate this block
+                freeBlockList[j] = false; //mark allocatedblock as used
+                break;
+            }
+        }
+        if (i==0){ //if this is the first block, store the block number
+            firstBlock = blockNumber; 
+        }
+        
+        if (previousBlock != -1){ //if this is not the first block, link the previous block to this one
+            disk.seek(previousBlock * BLOCK_SIZE);
+            disk.writeShort(blockNumber);
+        }
+        disk.seek(blockNumber * BLOCK_SIZE);
+        disk.writeShort(-1); //initialize next block pointer to -1
+
+        //Write the actual data to the block
+        int length = Math.min(blockData, data.length - offset);
+        disk.write(data, offset, length);
+        offset += length;
+
+        previousBlock = blockNumber; //upodate previous block ref
+        }
+        //update inode table
+        inodeTable[inodeIndex] = new FEntry(fileName, (short)data.length, firstBlock);
+
+        }finally{
+            globalLock.unlock();
+        }
     }
-    public String listFiles() throws Exception {
-        // TODO
-        throw new UnsupportedOperationException("Method not implemented yet.");
+    public String [] listFiles() {
+        globalLock.lock();
+        try{
+            //declare a list to hold the filenames
+            List<String> files = new ArrayList<>();
+            for (FEntry entry: inodeTable){
+                if (entry != null){
+                    files.add(entry.getFilename()); // add file names to the list
+                }
+            }
+            return files.toArray(new String[0]);
+
+        }finally{
+            globalLock.unlock();
+        }
     }
 }

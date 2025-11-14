@@ -47,12 +47,12 @@ public class FileServer {
                                 writer.println("SUCCESS: File '" + parts[1] + "' deleted.");
                                 break;
                             case "LIST":
-                                String files = fsManager.listFiles(); 
-                                if (files.length()==0){
+                                String[] files = fsManager.listFiles(); 
+                                if (files.length == 0){
                                     writer.println("No files.");
                                 }
                                 else {
-                                    writer.println("Files:\n" + files);
+                                    writer.println("Files:\n" + String.join("\n", files));
                                 }
                                 break;
                             // case "READ":
