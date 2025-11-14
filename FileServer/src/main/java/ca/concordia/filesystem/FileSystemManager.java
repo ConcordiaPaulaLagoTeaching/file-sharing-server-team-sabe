@@ -72,7 +72,7 @@ public class FileSystemManager {
                 throw new Exception("The maximum number of files is reached. No free file entries");
             }
             //if entry was found , create new entry but with no blocks allocated yet
-            inodeTable[inodeIndex] = new FEntry(fileName,(short) 0,(short) -1);
+            inodeTable[inodeIndex] = new FEntry(fileName, 0, -1);
         }finally{
             globalLock.unlock();
         }
@@ -87,7 +87,7 @@ public class FileSystemManager {
             }
 
             FEntry file = inodeTable[inodeIndex]; //get the file entry from the inode table
-            short currentBlock = file.getFirstBlock(); //get the first block of the file
+            int currentBlock = file.getFirstBlock(); //get the first block of the file
 
             while (currentBlock != -1){ //while there are still blocks
                 disk.seek(currentBlock * BLOCK_SIZE); //jumps to offset currentBlock * BLOCK_SIZE to read the next block index
@@ -116,8 +116,8 @@ public class FileSystemManager {
             }
 
             FEntry file = inodeTable[inodeIndex];
-            int fileSize = file.getFilesize();
-            short currentBlock = file.getFirstBlock();
+            int fileSize = file.getSize();
+            int currentBlock = file.getFirstBlock();
 
             if(fileSize==0){ //empty file , nothing to read
                 return new byte[0];
@@ -171,7 +171,7 @@ public class FileSystemManager {
             FEntry file = inodeTable[inodeIndex]; //get the file entry from the inode table
 
             //Free previously allocated blocks
-            short currentBlock = file.getFirstBlock();
+            int currentBlock = file.getFirstBlock();
             while(currentBlock !=-1){ //while there are still blocks
                 disk.seek(currentBlock * BLOCK_SIZE);
                 short nextBlock = disk.readShort(); //get the next block index
@@ -217,7 +217,7 @@ public class FileSystemManager {
                 previousBlock = blockNumber; //upodate previous block ref
             }
             //update inode table
-            inodeTable[inodeIndex] = new FEntry(fileName, (short)data.length, firstBlock);
+            inodeTable[inodeIndex] = new FEntry(fileName, data.length, firstBlock);
 
         }finally{
             globalLock.unlock();
