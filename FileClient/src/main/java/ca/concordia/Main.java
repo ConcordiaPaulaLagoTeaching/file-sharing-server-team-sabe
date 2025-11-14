@@ -4,7 +4,7 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.PrintWriter;
-import java.net.Socket;
+import java.net.Socket; //connects to a server using TCP
 import java.util.Scanner;
 
 // Press Shift twice to open the Search Everywhere dialog and type `show whitespaces`,
@@ -13,10 +13,10 @@ public class Main {
     public static void main(String[] args) {
         //Socket CLient
         System.out.println("Hello and welcome!");
-        Scanner scanner = new Scanner(System.in);
+        Scanner scanner = new Scanner(System.in); //creates a scanner to read text the user types in the terminal
 
         try{
-            Socket clientSocket = new Socket("localhost", 12345);
+            Socket clientSocket = new Socket("localhost", 12345); //tries to create a TCP connection to a server.
             System.out.println("Connected to the server at localhost:12345");
 
             //read user input from console
