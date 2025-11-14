@@ -52,28 +52,32 @@ public class FileSystemManager {
 
     public void createFile(String fileName) throws Exception {
         globalLock.lock();
-        try {
-            //Verify if the file exists.
-            for (int i=0; i<MAXFILES; i++){
-                if (inodeTable[i]!=null && inodeTable[i].getFilename().equals(fileName)){
-                    throw new Exception("The File "+ fileName + " already exists.");
+            try {
+                //Error handling for filename length
+                if (fileName.length() > 11) {
+                    throw new Exception("ERROR: filename too large");
                 }
-            }
-            //find free node in node table
-            int inodeIndex = -1;
-            for (int i=0; i<MAXFILES; i++){
-                if (inodeTable[i]==null){ //if no node currently occupies this node
-                    inodeIndex=i; //remember index and stop searching
-                    break;
+                //Verify if the file exists.
+                for (int i=0; i<MAXFILES; i++){
+                    if (inodeTable[i]!=null && inodeTable[i].getFilename().equals(fileName)){
+                        throw new Exception("The File "+ fileName + " already exists.");
+                    }
                 }
-            }
-            //if no free nodes were  found , throw exception
-            if (inodeIndex == -1){
-                throw new Exception("The maximum number of files is reached. No free file entries");
-            }
-            //if entry was found , create new entry but with no blocks allocated yet
-            inodeTable[inodeIndex] = new FEntry(fileName, 0, -1);
-        }finally{
+                //find free node in node table
+                int inodeIndex = -1;
+                for (int i=0; i<MAXFILES; i++){
+                    if (inodeTable[i]==null){ //if no node currently occupies this node
+                        inodeIndex=i; //remember index and stop searching
+                        break;
+                    }
+                }
+                //if no free nodes were  found , throw exception
+                if (inodeIndex == -1){
+                    throw new Exception("The maximum number of files is reached. No free file entries");
+                }
+                //if entry was found , create new entry but with no blocks allocated yet
+                inodeTable[inodeIndex] = new FEntry(fileName, 0, -1);
+            }finally{
             globalLock.unlock();
         }
     }
