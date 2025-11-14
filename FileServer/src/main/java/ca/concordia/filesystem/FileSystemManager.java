@@ -21,7 +21,7 @@ public class FileSystemManager {
     public static FileSystemManager getInstance(String filename, int totalSize)throws Exception {
         // Initialize the file system manager with a file
         if(instance == null) {
-            //TODO Initialize the file system
+            //Initialize the file system
             instance = new FileSystemManager(filename, totalSize); //creates one FileSystemManager instance
         }
             return instance;
@@ -36,6 +36,16 @@ public class FileSystemManager {
         }
         //for debugging purposes,print info
         System.out.println("File system initialized with"+ totalSize+"bytes.");
+    }
+
+    //Function to find file by name
+    private int findFileByName(String inputFileName){ 
+        for (int i=0; i<MAXFILES;i++){
+            if(inodeTable[i]!=null && inodeTable[i].getFilename().equals(inputFileName)){
+                return i; //retuns the index of the file in the inode table
+            }
+        }
+        return -1; //file not found
     }
 
     public void createFile(String fileName) throws Exception {
@@ -65,13 +75,70 @@ public class FileSystemManager {
             globalLock.unlock();
         }
     }
+
     public void deleteFile(String fileName) throws Exception {
-        // TODO
-        throw new UnsupportedOperationException("Method not implemented yet.");
+        globalLock.lock();
+        try{
+            int inodeIndex = findFileByName(fileName); //store the index of the file to be deleted
+            if (inodeIndex==-1){ //if file was not found
+                throw new Exception("The file"+ fileName +"was not found");
+            }
+
+            FEntry file = inodeTable[inodeIndex]; //get the file entry from the inode table
+            short currentBlock = file.getFirstBlock(); //get the first block of the file
+
+            while (currentBlock != -1){ //while there are still blocks
+                disk.seek(currentBlock * BLOCK_SIZE); //jumps to offset currentBlock * BLOCK_SIZE to read the next block index
+                short nextBlock = disk.readShort(); //read the next block index
+
+                disk.seek(currentBlock * BLOCK_SIZE); 
+                byte[] zeroBlock = new byte [BLOCK_SIZE]; //overwrite the block with zeros
+                disk.write(zeroBlock);
+
+                freeBlockList[currentBlock]=true; //add the block to the free block list
+                currentBlock = nextBlock; //move to the next block
+            }
+
+            inodeTable[inodeIndex] = null; //delete the inode entry at this index
+            
+            } finally {
+                globalLock.unlock();
+            }
     }
     public byte[] readFile(String fileName, int offset, int length) throws Exception {
-        // TODO
-        throw new UnsupportedOperationException("Method not implemented yet.");
+        globalLock.lock();
+        try{
+            int inodeIndex = findFileByName(fileName);
+            if (inodeIndex == -1){
+                throw new Exception ("The file"+fileName+"was not found.");
+            }
+
+            FEntry file = inodeTable[inodeIndex]; 
+            int fileSize = file.getFilesize();
+            short currentBlock = file.getFirstBlock();
+            
+            if(fileSize==0){ //empty file , nothing to read
+                return new byte[0];
+            }
+            //if file is not empty , read its contents
+            byte[] contents = new byte[fileSize]; //create a byte array to hold the file contents
+            int bytesRead = 0;
+
+            while (currentBlock != -1 && bytesRead < fileSize){ //while there are still blocks and we have not read the entire file
+                int toRead = Math.min(BLOCK_SIZE-2, fileSize - bytesRead); //calculate how many bytes to read from this block
+
+                disk.seek(currentBlock * BLOCK_SIZE); 
+                short nextBlock = disk.readShort();
+                disk.read(contents, bytesRead, toRead); //read the block data into the contents array
+
+                bytesRead +=toRead; //change the number of bytes read
+                currentBlock = nextBlock;  //move to the next block
+            }
+            return contents; //read the file contents
+
+        } finally{
+            globalLock.unlock();
+        }
     }
     public void writeFile(String fileName, int offset, byte[] data) throws Exception {
         // TODO
