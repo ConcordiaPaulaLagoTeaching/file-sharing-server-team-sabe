@@ -42,27 +42,43 @@ public class FileServer {
                                 writer.println("SUCCESS: File '" + parts[1] + "' created.");
                                 writer.flush();
                                 break;
+
                             case "DELETE":
                                 fsManager.deleteFile(parts[1]);
                                 writer.println("SUCCESS: File '" + parts[1] + "' deleted.");
                                 break;
+
                             case "LIST":
                                 String[] files = fsManager.listFiles(); 
                                 if (files.length == 0){
-                                    writer.println("No files.");
+                                    writer.println("SUCCESS: No files.");
                                 }
                                 else {
-                                    writer.println("Files:\n" + String.join("\n", files));
+                                    writer.println("SUCCESS: Files:\n" + String.join("\n", files));
                                 }
                                 break;
-                            // case "READ":
-                            // byte[] contents = fsManager.readFile(parts[1]);
-                            // writer.println("CONTENT: " + new String(contents));
-                            // break;
+
+                            case "READ":
+                                byte[] contents = fsManager.readFile(parts[1],0,Integer.MAX_VALUE);
+                                writer.println("CONTENT: " + new String(contents));
+                                break;
+
+                            case "WRITE":
+                            String[] writeParts = parts[1].split("\\s+",2);
+                            if (writeParts.length<2){
+                                writer.println("ERROR: Missing content.");
+                                break;
+                            }
+                            String filename = writeParts[0];
+                            String content = writeParts[1];
+                            fsManager.writeFile(filename, content.getBytes());
+                            writer.println("SUCCESS: content was sucessfully written in  "+filename+ ".");
+                                break;
 
                             case "QUIT":
                                 writer.println("SUCCESS: Disconnecting.");
                                 return;
+
                             default:
                                 writer.println("ERROR: Unknown command.");
                                 break;
