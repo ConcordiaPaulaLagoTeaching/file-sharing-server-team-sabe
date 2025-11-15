@@ -74,8 +74,8 @@ public class FileServer {
                     System.out.println("Received from client: " + line);
 
                     try{
-
-                        String[] parts = line.split(" ");
+                        // Split the incoming line into at most 3 parts: COMMAND, FILENAME, CONTENT (which may contain spaces)
+                        String[] parts = line.trim().split("\\s+", 3);
                         String command = parts[0].toUpperCase();
 
                         switch (command) {
@@ -107,7 +107,8 @@ public class FileServer {
                                     writer.println("SUCCESS: No files.");
                                 }
                                 else {
-                                    writer.println("SUCCESS: Files:\n" + String.join("\n", files));
+                                    // Send as a single line to avoid client needing multiple reads
+                                    writer.println("SUCCESS: Files: " + String.join(", ", files));
                                 }
                                 break;
 
@@ -124,20 +125,19 @@ public class FileServer {
                             case "WRITE":
                                 // Error handling for missing filename
                                 if (parts.length < 2) {
-                                    writer.println("ERROR: Missing filename");
+                                    writer.println("ERROR: Missing filename.");
                                     break;
                                 }
-                                // Error handling for missing content
-                                String[] writeParts = parts[1].split("\\s+",2);
-                                if (writeParts.length<2){
+                                // Error handling for missing content (third part)
+                                if (parts.length < 3 || parts[2].isEmpty()) {
                                     writer.println("ERROR: Missing content.");
                                     break;
                                 }
-                                String filename = writeParts[0];
-                                String content = writeParts[1];
+                                String filename = parts[1];
+                                String content = parts[2]; // supports spaces due to split limit above
                                 fsManager.writeFile(filename, content.getBytes());
-                                writer.println("SUCCESS: content was sucessfully written in  "+filename+ ".");
-                                    break;
+                                writer.println("SUCCESS: Content written to '" + filename + "'.");
+                                break;
 
                             case "QUIT":
                                 writer.println("SUCCESS: Disconnecting.");
@@ -148,8 +148,26 @@ public class FileServer {
                                 break;
                          }
                     }catch (Exception e){
-                        writer.println("ERROR:"+e.getMessage());
-                        System.err.println("Error:"+e.getMessage());
+                        String msg = e.getMessage();
+                        if (msg == null || msg.isEmpty()) {
+                            msg = "Unknown error";
+                        }
+                        msg = msg.trim();
+
+                        // Avoid double "ERROR:" prefix if downstream already formatted the message
+                        String upper = msg.toUpperCase();
+                        if (upper.startsWith("ERROR:")) {
+                            writer.println(msg);
+                        } else {
+                            writer.println("ERROR: " + msg);
+                        }
+
+                        // Normalize server stderr prefix once
+                        if (upper.startsWith("ERROR:")) {
+                            System.err.println(msg);
+                        } else {
+                            System.err.println("ERROR: " + msg);
+                        }
                     }
                 }
             } catch (Exception e) {
